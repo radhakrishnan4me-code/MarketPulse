@@ -88,17 +88,41 @@ All methods support two output modes:
 
 ## MCP Server
 
-MarketPulse includes a FastMCP server for AI agent integration:
+MarketPulse includes a FastMCP server for AI agent and automation integration.
 
+### Local Usage (stdio)
+For use with AI coding assistants like **Claude Desktop** or **Cursor**:
 ```bash
-# stdio mode (for Claude Code, Cursor, etc.)
 python mcp_server.py
-
-# Available tools: 22 total
-# mc_latest_news, mc_market_news, mc_stock_news, ...
-# ndtv_latest_news, ndtv_market_news, ndtv_stock_news, ...
-# all_latest_news, all_market_news, all_stock_news (combined)
 ```
+
+### Server/Automation Usage (HTTP/SSE)
+For use with **n8n** or other remote clients:
+```bash
+python mcp_server.py --transport http --port 8000
+```
+
+---
+
+## Docker Deployment
+
+I have included a `Dockerfile` and `docker-compose.yml` for easy deployment on VPS environments (e.g., via **Portainer**).
+
+### Quick Start with Docker Compose
+```bash
+docker-compose up -d
+```
+
+### Portainer Installation
+1.  Add a new **Stack**.
+2.  Select **Repository** as the build method.
+3.  Enter your repository URL.
+4.  Specify `docker-compose.yml` as the compose path.
+5.  Deploy.
+
+The server will be available at `http://YOUR_VPS_IP:8000/sse` for n8n.
+
+---
 
 ## Architecture
 
