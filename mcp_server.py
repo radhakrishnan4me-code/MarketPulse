@@ -465,6 +465,31 @@ def all_stock_news(symbol: str, limit: int = 10):
     return combined
 
 
+# =====================================================================
+# BEARER AUTH MIDDLEWARE (for Host Rewriting)
+# =====================================================================
+
+class HostRewritingMiddleware:
+    """
+    ASGI middleware that rewrites the Host header to localhost 
+    to pass MCP DNS rebinding checks when running in Docker/n8n.
+    """
+    def __init__(self, app, port):
+        self.app = app
+        self.port = port
+
+    async def __call__(self, scope, receive, send):
+        if scope["type"] == "http":
+            new_headers = []
+            for key, value in scope.get("headers", []):
+                if key == b"host":
+                    # Force host to localhost to satisfy MCP security
+                    value = f"localhost:{self.port}".encode()
+                new_headers.append((key, value))
+            scope = dict(scope, headers=new_headers)
+
+        await self.app(scope, receive, send)
+
 # ================================================================
 #                   ENTRY POINT
 # ================================================================
@@ -484,7 +509,10 @@ if __name__ == "__main__":
         print(f"Starting MarketPulse MCP Server on http://{args.host}:{args.port}")
         
         # Create the MCP Starlette app for streamable-http transport
-        app = mcp.streamable_http_app()
+        mcp_app = mcp.streamable_http_app()
+        
+        # Wrap with host rewrite middleware to fix Docker "Invalid Host header" errors
+        app = HostRewritingMiddleware(mcp_app, args.port)
 
         uvicorn.run(app, host=args.host, port=args.port)
     else:
